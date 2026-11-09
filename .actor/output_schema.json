@@ -1,0 +1,13 @@
+{
+  "actorOutputSchemaVersion": 1,
+  "title": "B2B Tech-Stack Output",
+  "description": "Enriched company technology profiles and public contact details",
+  "type": "object",
+  "properties": {
+    "companies": {
+      "title": "Analyzed Companies",
+      "type": "string",
+      "template": "{{links.apiDefaultDatasetUrl}}/items?format=json"
+    }
+  }
+}
