@@ -7,12 +7,15 @@
       "title": "Company Domain",
       "type": "string",
       "description": "Target company website domain (e.g. stripe.com, shopify.com, webflow.com)",
-      "default": "stripe.com"
+      "editor": "textfield",
+      "default": "stripe.com",
+      "prefill": "stripe.com"
     },
     "domains": {
       "title": "Domain List",
       "type": "array",
       "description": "Optional list of domains to analyze in batch (up to 20)",
+      "editor": "stringList",
       "items": {
         "type": "string"
       }
