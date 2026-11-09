@@ -1,0 +1,21 @@
+{
+  "title": "B2B Tech-Stack & Contact Scraper Input",
+  "type": "object",
+  "schemaVersion": 1,
+  "properties": {
+    "domain": {
+      "title": "Company Domain",
+      "type": "string",
+      "description": "Target company website domain (e.g. stripe.com, shopify.com, webflow.com)",
+      "default": "stripe.com"
+    },
+    "domains": {
+      "title": "Domain List",
+      "type": "array",
+      "description": "Optional list of domains to analyze in batch (up to 20)",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}
