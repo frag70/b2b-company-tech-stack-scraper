@@ -3,6 +3,16 @@
   "type": "object",
   "schemaVersion": 1,
   "properties": {
+    "runMode": {
+      "title": "Run Mode",
+      "type": "string",
+      "description": "Standard batch run (scrapes & saves to dataset) or continuous Standby HTTP server",
+      "editor": "select",
+      "default": "BATCH",
+      "prefill": "BATCH",
+      "enum": ["BATCH", "STANDBY_SERVER"],
+      "enumTitles": ["Batch Run (Export to Dataset)", "Standby HTTP Server (Persistent API)"]
+    },
     "domain": {
       "title": "Company Domain",
       "type": "string",

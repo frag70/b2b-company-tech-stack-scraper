@@ -247,6 +247,45 @@ async def run_server(port: int):
     async with server:
         await server.serve_forever()
 
+async def run_batch(actor_input: Dict[str, Any]):
+    """Execute standard batch run, push data to Apify dataset, and charge PPE event."""
+    domain = actor_input.get("domain", "stripe.com")
+    domains = actor_input.get("domains")
+
+    target_domains = []
+    if domains and isinstance(domains, list):
+        target_domains = [d.strip() for d in domains if d.strip()][:20]
+    elif domain:
+        target_domains = [domain.strip()]
+    else:
+        target_domains = ["stripe.com"]
+
+    print(f"🔎 [BATCH] Analyzing tech stack for {len(target_domains)} domain(s): {target_domains}...")
+    loop = asyncio.get_running_loop()
+    results = []
+    for d in target_domains:
+        res = await loop.run_in_executor(None, analyze_domain, d)
+        results.append(res)
+
+    is_apify = Actor and hasattr(Actor, "is_at_home") and Actor.is_at_home()
+    if is_apify:
+        try:
+            await Actor.charge(event_name="actor-start", count=1)
+        except Exception as e:
+            print(f"[WARN] Failed to charge actor-start: {e}", file=sys.stderr)
+
+        if results:
+            try:
+                await Actor.charge(event_name="company-analyzed", count=len(results))
+            except Exception as e:
+                print(f"[WARN] Failed to charge company-analyzed: {e}", file=sys.stderr)
+
+    if Actor:
+        await Actor.push_data(results)
+        print(f"✅ Successfully pushed {len(results)} analyzed company profile(s) to default dataset!")
+    else:
+        print(json.dumps(results, indent=2))
+
 async def main():
     if "--cli" in sys.argv:
         domain = sys.argv[2] if len(sys.argv) > 2 else "stripe.com"
@@ -255,15 +294,25 @@ async def main():
         print(json.dumps(res, indent=2))
         return
 
-    port = int(os.environ.get("ACTOR_WEB_SERVER_PORT", "8080"))
+    if "--server" in sys.argv:
+        port = int(os.environ.get("ACTOR_WEB_SERVER_PORT", "8080"))
+        await run_server(port)
+        return
+
     if Actor:
         async with Actor:
-            if hasattr(Actor, "configuration") and hasattr(Actor.configuration, "web_server_port"):
-                if Actor.configuration.web_server_port:
-                    port = Actor.configuration.web_server_port
-            await run_server(port)
+            actor_input = await Actor.get_input() or {}
+            mode = actor_input.get("runMode", "BATCH")
+            if mode == "STANDBY_SERVER":
+                port = int(os.environ.get("ACTOR_WEB_SERVER_PORT", "8080"))
+                if hasattr(Actor, "configuration") and hasattr(Actor.configuration, "web_server_port"):
+                    if Actor.configuration.web_server_port:
+                        port = Actor.configuration.web_server_port
+                await run_server(port)
+            else:
+                await run_batch(actor_input)
     else:
-        await run_server(port)
+        await run_batch({})
 
 if __name__ == "__main__":
     try:
